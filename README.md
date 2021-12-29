@@ -26,9 +26,11 @@ One very important requirement is that your mac must be running OS X Sierra (10.
 This script makes use of the xcode command line tools, qt, homebrew (not much anymore), and craft.
 In the old version of the script, you had to install many of these first, but it can now do them automatically. 
 You can install these things beforehand if you like, but it is not required, as they will install.
-Warning:  Craft now must use its own internal version of QT.  If you have one installed elsewhere, such as ~/Qt, it could cause issues.  
+**Warning:**  Craft now must use its own internal version of QT.  If you have one installed elsewhere, such as ~/Qt, it could cause issues.  
 I kept getting this error where KStars wouldn't launch because it said certain classes were defined in two different places and it said 
 "One of the two will be used. Which one is undefined."  So it is better to just have the one qt.
+**Warning:**  Pre-existing dependencies built in homebrew which are expected in Craft can cause issues. 
+Dedicating a virtual machine to this is one way to isolate problems.
 
 Links to the websites of key tools:
 - QT         [https://www.qt.io](https://www.qt.io)
