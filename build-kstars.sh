@@ -222,9 +222,6 @@ EOF
 	# Craft does build ninja and install it to the craft directory, but QT Creator expects the homebrew version.
 	brew install ninja
 	
-	# astropy is a required module for astrometry.net, note this is not an absolute requirement anymore
-	#$(brew --prefix)/bin/pip3 install astropy
-	
 	# I tried to write a recipe for gpsd, but it requires scons, and I have no idea what to do.
 	brew install gpsd 
 	
@@ -278,13 +275,16 @@ EOF
 	cd ${CRAFT_DIR}/etc/blueprints/locations
 	git clone https://github.com/KDE/craft-blueprints-kde.git
 	statusBanner "Replacing default craft recipes with revised Mac recipes and adding some of my own until they get revised and accepted."
-	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/libraw
-	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/wcslib
-	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/cfitsio
-	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/_unix/swig
-	cp -R ${DIR}/craftRecipes/libs/* ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/
-	cp -R ${DIR}/craftRecipes/libs-unix/swig ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/_unix/
-	cp -R ${DIR}/craftRecipes/kde/applications/kstars-mac ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/kde/applications/
+	# These are the ones that need replacing for now.  I hope to eliminate all of them in the future.
+	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/libraw 		# Note, this has to stay until they fix 0.20's OpenMP error in craft, Also, there is an issue with the install ID
+	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/wcslib 		# This one is needed because of an issue with the latest wcslib 7.7's wcsconfig.h definition of int64
+	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/pcre 		# The normal pcre doesn't have the right install id for its libs. This corrects that
+	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/_unix/swig 	# swig needs to have the pcre built first otherwise it can't find it.  This just adds it as a dependency
+	rm -rf ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/kde/applications/kstars # This will need to be finished and accepted before it can be merged.	
+	# This copies in all the recipes including the replacements and the new recipes.
+	cp -R ${DIR}/craftRecipes/libs/* ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/ # This copies in all the new and modified lib recipes
+	cp -R ${DIR}/craftRecipes/libs-unix/swig ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/libs/_unix/ # This copies in the new swig recipe
+	cp -R ${DIR}/craftRecipes/kde/applications/kstars ${CRAFT_DIR}/etc/blueprints/locations/craft-blueprints-kde/kde/applications/ # This copies in the main kstars recipe
 	
 #This sets the craft environment based on the settings.
 	source "${CRAFT_DIR}/craft/craftenv.sh"
@@ -331,12 +331,6 @@ EOF
 		find -L "${CRAFT_DIR}/lib" -maxdepth 1 -type l
 		exit
 	fi
-	
-	# Note this should be removed because it should be handled in the dbus craft recipe
-	# But for now it has to be done here because the dbus that craft builds will not work for us with the settings they picked.
-	announce "Building dbus and dbus-kstars to be sure we get the right version in the app"
-	craft "$VERBOSE" dbus
-	craft "$VERBOSE" -i dbus-kstars
 
 #This will build gsc if Needed, but no need to build it every time.
 	if [ ! -d "${CRAFT_DIR}"/gsc ]
@@ -356,9 +350,9 @@ EOF
 	statusBanner "Crafting KStars"
 	if [ -n "$STABLE_BUILD" ]
 	then
-		craft "$VERBOSE" -i kstars-mac
+		craft "$VERBOSE" -i kstars
 	else
-		craft "$VERBOSE" -i --target "Latest" kstars-mac
+		craft "$VERBOSE" -i --target "Latest" kstars
 	fi
 		
 	announce "CRAFT COMPLETE"
@@ -387,9 +381,9 @@ EOF
 	mv ${SHORTCUTS_DIR}/RelWithDebInfo-Latest ${SHORTCUTS_DIR}/indiwebmanagerapp-build
 	
 	# KStars
-	ln -sf ${CRAFT_DIR}/download/git/kde/applications/kstars-mac ${SHORTCUTS_DIR}
-	mv ${SHORTCUTS_DIR}/kstars-mac ${SHORTCUTS_DIR}/kstars-source
-	ln -sf ${CRAFT_DIR}/build/kde/applications/kstars-mac/work/RelWithDebInfo-Latest ${SHORTCUTS_DIR}
+	ln -sf ${CRAFT_DIR}/download/git/kde/applications/kstars ${SHORTCUTS_DIR}
+	mv ${SHORTCUTS_DIR}/kstars ${SHORTCUTS_DIR}/kstars-source
+	ln -sf ${CRAFT_DIR}/build/kde/applications/kstars/work/RelWithDebInfo-Latest ${SHORTCUTS_DIR}
 	mv ${SHORTCUTS_DIR}/RelWithDebInfo-Latest ${SHORTCUTS_DIR}/kstars-build
 	
 	# INDIServer
@@ -431,7 +425,6 @@ EOF
 		cp -rf ${KSTARS_CRAFT_APP}/Contents/Plugins ${KSTARS_XCODE_APP}/Contents/
 		cp -rf ${KSTARS_CRAFT_APP}/Contents/Resources ${KSTARS_XCODE_APP}/Contents/
 
-		cp -rf ${KSTARS_CRAFT_APP}/Contents/MacOS/astrometry ${KSTARS_XCODE_APP}/Contents/MacOS/
 		cp -f ${KSTARS_CRAFT_APP}/Contents/MacOS/dbus-daemon ${KSTARS_XCODE_APP}/Contents/MacOS/
 		cp -f ${KSTARS_CRAFT_APP}/Contents/MacOS/dbus-send ${KSTARS_XCODE_APP}/Contents/MacOS/
 		cp -rf ${KSTARS_CRAFT_APP}/Contents/MacOS/indi ${KSTARS_XCODE_APP}/Contents/MacOS/
